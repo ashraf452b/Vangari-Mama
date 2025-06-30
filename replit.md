@@ -15,9 +15,10 @@ ScrapMama is a Flask-based web application that serves as a marketplace connecti
 
 ### Backend Architecture
 - **Framework**: Flask (Python web framework)
+- **Database**: PostgreSQL with SQLAlchemy ORM
 - **Authentication**: Flask-Login for session management
 - **Password Security**: Werkzeug for password hashing
-- **Data Storage**: In-memory storage using Python dictionaries
+- **Data Storage**: PostgreSQL database with persistent storage
 - **Session Management**: Flask sessions with configurable secret key
 
 ### Application Structure
@@ -75,14 +76,33 @@ ScrapMama is a Flask-based web application that serves as a marketplace connecti
 4. Collector completes pickup (status: accepted → completed)
 5. User receives reward points based on trash type and quantity
 
-### Data Storage Structure
-```python
-app_data = {
-    'users': {user_id: user_data},      # User profiles and authentication
-    'posts': {post_id: post_data},      # Trash collection posts
-    'next_user_id': int,                # Auto-incrementing ID counter
-    'next_post_id': int                 # Auto-incrementing ID counter
-}
+### Database Schema
+```sql
+-- Users table with authentication and rewards
+CREATE TABLE user (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(64) UNIQUE NOT NULL,
+    email VARCHAR(120) UNIQUE NOT NULL,
+    password_hash VARCHAR(256) NOT NULL,
+    user_type VARCHAR(20) DEFAULT 'user' NOT NULL,
+    reward_points INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Trash posts with collection workflow
+CREATE TABLE trash_post (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES user(id) NOT NULL,
+    trash_type VARCHAR(50) NOT NULL,
+    quantity INTEGER NOT NULL,
+    location VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(20) DEFAULT 'pending' NOT NULL,
+    collector_id INTEGER REFERENCES user(id),
+    reward_points INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP
+);
 ```
 
 ## External Dependencies

@@ -1,6 +1,6 @@
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
-from app import app
+from app import app, db
 from models import User, TrashPost
 from datetime import datetime
 
@@ -21,11 +21,11 @@ def register():
             flash('All fields are required.', 'danger')
             return render_template('register.html')
         
-        if User.get_by_username(username):
+        if User.query.filter_by(username=username).first():
             flash('Username already exists.', 'danger')
             return render_template('register.html')
         
-        if User.get_by_email(email):
+        if User.query.filter_by(email=email).first():
             flash('Email already registered.', 'danger')
             return render_template('register.html')
         
@@ -46,7 +46,7 @@ def login():
             flash('Username and password are required.', 'danger')
             return render_template('login.html')
         
-        user = User.get_by_username(username)
+        user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
             login_user(user)
             flash(f'Welcome back, {user.username}!', 'success')
@@ -75,7 +75,7 @@ def user_dashboard():
         flash('Access denied. This page is for users only.', 'danger')
         return redirect(url_for('collector_dashboard'))
     
-    posts = TrashPost.get_by_user(current_user.id)
+    posts = current_user.posts.order_by(TrashPost.created_at.desc()).all()
     total_earnings = sum(post.reward_points for post in posts if post.status == 'completed')
     
     return render_template('user_dashboard.html', posts=posts, total_earnings=total_earnings)
@@ -88,7 +88,7 @@ def collector_dashboard():
         return redirect(url_for('user_dashboard'))
     
     available_posts = TrashPost.get_available()
-    my_pickups = TrashPost.get_by_collector(current_user.id)
+    my_pickups = current_user.collections.order_by(TrashPost.created_at.desc()).all()
     
     return render_template('collector_dashboard.html', 
                          available_posts=available_posts, 
@@ -130,14 +130,11 @@ def create_post():
 @app.route('/post/<int:post_id>')
 @login_required
 def view_post(post_id):
-    post = TrashPost.get(post_id)
-    if not post:
-        flash('Post not found.', 'danger')
-        return redirect(url_for('user_dashboard' if current_user.user_type == 'user' else 'collector_dashboard'))
+    post = TrashPost.query.get_or_404(post_id)
     
     # Get post owner information
-    post_owner = User.get(post.user_id)
-    collector = User.get(post.collector_id) if post.collector_id else None
+    post_owner = post.owner
+    collector = post.collector if post.collector_id else None
     
     return render_template('view_post.html', post=post, post_owner=post_owner, collector=collector)
 
@@ -148,10 +145,7 @@ def accept_pickup(post_id):
         flash('Only collectors can accept pickups.', 'danger')
         return redirect(url_for('user_dashboard'))
     
-    post = TrashPost.get(post_id)
-    if not post:
-        flash('Post not found.', 'danger')
-        return redirect(url_for('collector_dashboard'))
+    post = TrashPost.query.get_or_404(post_id)
     
     if post.status != 'pending':
         flash('This pickup is no longer available.', 'warning')
@@ -160,7 +154,7 @@ def accept_pickup(post_id):
     # Accept the pickup
     post.status = 'accepted'
     post.collector_id = current_user.id
-    post.save()
+    db.session.commit()
     
     flash('Pickup accepted successfully!', 'success')
     return redirect(url_for('collector_dashboard'))
@@ -172,10 +166,7 @@ def complete_pickup(post_id):
         flash('Only collectors can complete pickups.', 'danger')
         return redirect(url_for('user_dashboard'))
     
-    post = TrashPost.get(post_id)
-    if not post:
-        flash('Post not found.', 'danger')
-        return redirect(url_for('collector_dashboard'))
+    post = TrashPost.query.get_or_404(post_id)
     
     if post.collector_id != current_user.id:
         flash('You can only complete your own pickups.', 'danger')
@@ -187,14 +178,13 @@ def complete_pickup(post_id):
     
     # Complete the pickup
     post.status = 'completed'
-    post.completed_at = datetime.now()
-    post.save()
+    post.completed_at = datetime.utcnow()
     
     # Award points to the user
-    user = User.get(post.user_id)
-    if user:
-        user.reward_points += post.reward_points
-        user.save()
+    user = post.owner
+    user.reward_points += post.reward_points
+    
+    db.session.commit()
     
     flash('Pickup completed successfully! User has been awarded reward points.', 'success')
     return redirect(url_for('collector_dashboard'))
@@ -202,10 +192,7 @@ def complete_pickup(post_id):
 @app.route('/cancel_pickup/<int:post_id>', methods=['POST'])
 @login_required
 def cancel_pickup(post_id):
-    post = TrashPost.get(post_id)
-    if not post:
-        flash('Post not found.', 'danger')
-        return redirect(url_for('user_dashboard' if current_user.user_type == 'user' else 'collector_dashboard'))
+    post = TrashPost.query.get_or_404(post_id)
     
     # Check permissions
     if current_user.user_type == 'user' and post.user_id != current_user.id:
@@ -223,7 +210,7 @@ def cancel_pickup(post_id):
     # Cancel the pickup
     post.status = 'pending'
     post.collector_id = None
-    post.save()
+    db.session.commit()
     
     flash('Pickup cancelled successfully.', 'info')
     return redirect(url_for('user_dashboard' if current_user.user_type == 'user' else 'collector_dashboard'))
