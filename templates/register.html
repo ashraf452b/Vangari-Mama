@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Register - ScrapMama{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-recycle text-success fs-1 mb-3"></i>
+                        <h3 class="fw-bold">Join ScrapMama</h3>
+                        <p class="text-muted">Create your account and start making a difference</p>
+                    </div>
+                    
+                    <form method="POST" id="registerForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" class="form-control" id="username" name="username" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Account Type</label>
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="user_type" id="user_type_user" value="user" checked>
+                                        <label class="form-check-label" for="user_type_user">
+                                            <div class="card h-100">
+                                                <div class="card-body text-center p-3">
+                                                    <i class="fas fa-user text-primary fs-3 mb-2"></i>
+                                                    <h6 class="fw-bold mb-1">User</h6>
+                                                    <small class="text-muted">Post trash for pickup</small>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-sm-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="user_type" id="user_type_collector" value="collector">
+                                        <label class="form-check-label" for="user_type_collector">
+                                            <div class="card h-100">
+                                                <div class="card-body text-center p-3">
+                                                    <i class="fas fa-truck text-success fs-3 mb-2"></i>
+                                                    <h6 class="fw-bold mb-1">Collector</h6>
+                                                    <small class="text-muted">Collect trash from users</small>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success w-100 mb-3">
+                            <i class="fas fa-user-plus me-2"></i>Create Account
+                        </button>
+                    </form>
+                    
+                    <div class="text-center">
+                        <p class="mb-0">Already have an account? 
+                            <a href="{{ url_for('login') }}" class="text-success text-decoration-none fw-bold">Login</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    
+    if (!username || !email || !password) {
+        e.preventDefault();
+        alert('Please fill in all fields.');
+        return;
+    }
+    
+    if (password.length < 6) {
+        e.preventDefault();
+        alert('Password must be at least 6 characters long.');
+        return;
+    }
+});
+
+// Handle radio button card selection
+document.querySelectorAll('input[name="user_type"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('.form-check .card').forEach(card => {
+            card.classList.remove('border-success', 'bg-success', 'bg-opacity-10');
+        });
+        
+        if (this.checked) {
+            const card = this.nextElementSibling.querySelector('.card');
+            card.classList.add('border-success', 'bg-success', 'bg-opacity-10');
+        }
+    });
+});
+
+// Initialize selected card styling
+document.querySelector('input[name="user_type"]:checked').dispatchEvent(new Event('change'));
+</script>
+{% endblock %}

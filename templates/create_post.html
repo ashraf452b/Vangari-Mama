@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Create Post - ScrapMama{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header text-center">
+                    <h3 class="fw-bold mb-1"><i class="fas fa-plus-circle text-success me-2"></i>Create Trash Post</h3>
+                    <p class="text-muted mb-0">Post your trash details for collection</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" id="createPostForm">
+                        <div class="mb-3">
+                            <label for="trash_type" class="form-label">Trash Type *</label>
+                            <select class="form-select" id="trash_type" name="trash_type" required>
+                                <option value="">Select trash type...</option>
+                                <option value="plastic">Plastic</option>
+                                <option value="glass">Glass</option>
+                                <option value="metal">Metal</option>
+                                <option value="paper">Paper</option>
+                                <option value="electronic">Electronic</option>
+                                <option value="organic">Organic</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="quantity" class="form-label">Quantity (in units/kg) *</label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" 
+                                   min="1" required placeholder="e.g., 5">
+                            <div class="form-text">Enter the approximate quantity or weight</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="location" class="form-label">Pickup Location *</label>
+                            <input type="text" class="form-control" id="location" name="location" 
+                                   required placeholder="e.g., 123 Main St, City">
+                            <div class="form-text">Enter the full address for pickup</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="description" class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" id="description" name="description" 
+                                      rows="3" placeholder="Additional details about the trash..."></textarea>
+                        </div>
+                        
+                        <!-- Reward Preview -->
+                        <div class="alert alert-info" id="rewardPreview" style="display: none;">
+                            <h6 class="alert-heading"><i class="fas fa-coins me-2"></i>Estimated Reward</h6>
+                            <p class="mb-0">You will earn approximately <strong id="estimatedPoints">0</strong> reward points for this post.</p>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('user_dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>Create Post
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Reward calculation
+const rewardRates = {
+    'plastic': 2,
+    'glass': 3,
+    'metal': 4,
+    'paper': 1,
+    'electronic': 5,
+    'organic': 1
+};
+
+function calculateReward() {
+    const trashType = document.getElementById('trash_type').value;
+    const quantity = parseInt(document.getElementById('quantity').value) || 0;
+    
+    if (trashType && quantity > 0) {
+        const points = rewardRates[trashType] * quantity;
+        document.getElementById('estimatedPoints').textContent = points;
+        document.getElementById('rewardPreview').style.display = 'block';
+    } else {
+        document.getElementById('rewardPreview').style.display = 'none';
+    }
+}
+
+// Event listeners for reward calculation
+document.getElementById('trash_type').addEventListener('change', calculateReward);
+document.getElementById('quantity').addEventListener('input', calculateReward);
+
+// Form validation
+document.getElementById('createPostForm').addEventListener('submit', function(e) {
+    const trashType = document.getElementById('trash_type').value;
+    const quantity = document.getElementById('quantity').value;
+    const location = document.getElementById('location').value.trim();
+    
+    if (!trashType || !quantity || !location) {
+        e.preventDefault();
+        alert('Please fill in all required fields.');
+        return;
+    }
+    
+    if (parseInt(quantity) <= 0) {
+        e.preventDefault();
+        alert('Quantity must be greater than 0.');
+        return;
+    }
+});
+</script>
+{% endblock %}

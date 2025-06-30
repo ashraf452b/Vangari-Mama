@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}View Post - ScrapMama{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="fw-bold mb-0">
+                            <i class="fas fa-trash-alt me-2"></i>{{ post.trash_type|title }} Collection
+                        </h4>
+                        {% if post.status == 'pending' %}
+                            <span class="badge bg-warning fs-6">Pending</span>
+                        {% elif post.status == 'accepted' %}
+                            <span class="badge bg-info fs-6">Accepted</span>
+                        {% elif post.status == 'completed' %}
+                            <span class="badge bg-success fs-6">Completed</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-muted mb-3">POST DETAILS</h6>
+                            
+                            <div class="mb-3">
+                                <label class="text-muted small">Trash Type</label>
+                                <p class="fw-bold mb-0">{{ post.trash_type|title }}</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="text-muted small">Quantity</label>
+                                <p class="fw-bold mb-0">{{ post.quantity }} units/kg</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="text-muted small">Pickup Location</label>
+                                <p class="fw-bold mb-0">
+                                    <i class="fas fa-map-marker-alt text-danger me-2"></i>{{ post.location }}
+                                </p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="text-muted small">Reward Points</label>
+                                <p class="fw-bold mb-0 text-success">
+                                    <i class="fas fa-coins me-2"></i>{{ post.reward_points }} points
+                                </p>
+                            </div>
+                            
+                            {% if post.description %}
+                            <div class="mb-3">
+                                <label class="text-muted small">Description</label>
+                                <p class="mb-0">{{ post.description }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-muted mb-3">STATUS & TIMELINE</h6>
+                            
+                            <div class="mb-3">
+                                <label class="text-muted small">Posted By</label>
+                                <p class="fw-bold mb-0">
+                                    <i class="fas fa-user me-2"></i>{{ post_owner.username }}
+                                </p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="text-muted small">Created Date</label>
+                                <p class="fw-bold mb-0">{{ post.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                            </div>
+                            
+                            {% if collector %}
+                            <div class="mb-3">
+                                <label class="text-muted small">Collector</label>
+                                <p class="fw-bold mb-0">
+                                    <i class="fas fa-truck me-2"></i>{{ collector.username }}
+                                </p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if post.completed_at %}
+                            <div class="mb-3">
+                                <label class="text-muted small">Completed Date</label>
+                                <p class="fw-bold mb-0 text-success">{{ post.completed_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Status Timeline -->
+                            <div class="mb-3">
+                                <label class="text-muted small">Progress</label>
+                                <div class="progress-timeline">
+                                    <div class="timeline-item {% if post.status in ['pending', 'accepted', 'completed'] %}completed{% endif %}">
+                                        <i class="fas fa-plus-circle"></i>
+                                        <span>Posted</span>
+                                    </div>
+                                    <div class="timeline-item {% if post.status in ['accepted', 'completed'] %}completed{% endif %}">
+                                        <i class="fas fa-hand-paper"></i>
+                                        <span>Accepted</span>
+                                    </div>
+                                    <div class="timeline-item {% if post.status == 'completed' %}completed{% endif %}">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>Completed</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="border-top pt-4 mt-4">
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a href="{{ url_for('user_dashboard' if current_user.user_type == 'user' else 'collector_dashboard') }}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                            
+                            {% if current_user.user_type == 'collector' and post.status == 'pending' %}
+                                <form method="POST" action="{{ url_for('accept_pickup', post_id=post.id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-check me-2"></i>Accept Pickup
+                                    </button>
+                                </form>
+                            {% endif %}
+                            
+                            {% if current_user.user_type == 'collector' and post.collector_id == current_user.id and post.status == 'accepted' %}
+                                <form method="POST" action="{{ url_for('complete_pickup', post_id=post.id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-success"
+                                            onclick="return confirm('Mark this pickup as completed?')">
+                                        <i class="fas fa-check-double me-2"></i>Mark Complete
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ url_for('cancel_pickup', post_id=post.id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-danger"
+                                            onclick="return confirm('Cancel this pickup?')">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </button>
+                                </form>
+                            {% endif %}
+                            
+                            {% if current_user.user_type == 'user' and post.user_id == current_user.id and post.status in ['pending', 'accepted'] %}
+                                <form method="POST" action="{{ url_for('cancel_pickup', post_id=post.id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-danger"
+                                            onclick="return confirm('Are you sure you want to cancel this post?')">
+                                        <i class="fas fa-times me-2"></i>Cancel Post
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
