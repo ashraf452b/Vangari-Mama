@@ -44,9 +44,12 @@
                             </div>
                             
                             <div class="mb-3">
-                                <label class="text-muted small">Reward Points</label>
+                                <label class="text-muted small">Price</label>
                                 <p class="fw-bold mb-0 text-success">
-                                    <i class="fas fa-coins me-2"></i>{{ post.reward_points }} points
+                                    <i class="fas fa-dollar-sign me-2"></i>${{ "%.2f"|format(post.price) }}
+                                    {% if post.is_negotiable %}
+                                        <span class="badge bg-info ms-2">Negotiable</span>
+                                    {% endif %}
                                 </p>
                             </div>
                             

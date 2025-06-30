@@ -76,7 +76,7 @@ def user_dashboard():
         return redirect(url_for('collector_dashboard'))
     
     posts = current_user.posts.order_by(TrashPost.created_at.desc()).all()
-    total_earnings = sum(post.reward_points for post in posts if post.status == 'completed')
+    total_earnings = sum(float(post.price) for post in posts if post.status == 'completed')
     
     return render_template('user_dashboard.html', posts=posts, total_earnings=total_earnings)
 
@@ -106,10 +106,12 @@ def create_post():
         quantity = request.form.get('quantity')
         location = request.form.get('location')
         description = request.form.get('description')
+        price = request.form.get('price')
+        is_negotiable = request.form.get('is_negotiable') == 'on'
         
         # Validation
-        if not trash_type or not quantity or not location:
-            flash('Trash type, quantity, and location are required.', 'danger')
+        if not trash_type or not quantity or not location or not price:
+            flash('Trash type, quantity, location, and price are required.', 'danger')
             return render_template('create_post.html')
         
         try:
@@ -120,8 +122,16 @@ def create_post():
             flash('Quantity must be a positive number.', 'danger')
             return render_template('create_post.html')
         
+        try:
+            price = float(price)
+            if price < 0:
+                raise ValueError
+        except ValueError:
+            flash('Price must be a valid number.', 'danger')
+            return render_template('create_post.html')
+        
         # Create post
-        post = TrashPost.create(current_user.id, trash_type, quantity, location, description)
+        post = TrashPost.create(current_user.id, trash_type, quantity, location, description, price, is_negotiable)
         flash('Trash post created successfully!', 'success')
         return redirect(url_for('user_dashboard'))
     
@@ -180,13 +190,13 @@ def complete_pickup(post_id):
     post.status = 'completed'
     post.completed_at = datetime.utcnow()
     
-    # Award points to the user
+    # Add earnings to the user
     user = post.owner
-    user.reward_points += post.reward_points
+    user.total_earnings += post.price
     
     db.session.commit()
     
-    flash('Pickup completed successfully! User has been awarded reward points.', 'success')
+    flash('Pickup completed successfully! Payment has been processed.', 'success')
     return redirect(url_for('collector_dashboard'))
 
 @app.route('/cancel_pickup/<int:post_id>', methods=['POST'])

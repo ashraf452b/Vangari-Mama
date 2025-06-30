@@ -2,7 +2,7 @@
 
 ## Overview
 
-ScrapMama is a Flask-based web application that serves as a marketplace connecting waste generators with collectors. The platform allows users to post their trash for collection while earning reward points, and enables collectors to find and manage pickup opportunities. The application promotes environmental sustainability by facilitating efficient waste collection and recycling.
+ScrapMama is a Flask-based web application that serves as a marketplace connecting waste sellers with collectors. The platform allows users to post their recyclable items for sale with custom pricing (including negotiable options), and enables collectors to find and purchase items. The application promotes environmental sustainability by facilitating efficient waste collection and recycling while providing monetary incentives.
 
 ## System Architecture
 
@@ -48,10 +48,11 @@ ScrapMama is a Flask-based web application that serves as a marketplace connecti
 - **Two User Types**: Regular users (waste generators) and collectors
 - **Authentication**: Username/password with secure hashing
 - **Session Management**: Flask-Login integration for persistent sessions
-- **Reward System**: Point-based rewards for completed transactions
+- **Pricing System**: Cash-based transactions with negotiable pricing options
 
 ### Trash Post Management
-- **Post Creation**: Users can create posts with trash type, quantity, location, and description
+- **Post Creation**: Users can create posts with trash type, quantity, location, description, and price
+- **Pricing Options**: Set fixed prices or mark items as negotiable
 - **Status Tracking**: Posts progress through pending → accepted → completed states
 - **Categorization**: Support for multiple trash types (plastic, glass, metal, paper, electronic, organic)
 - **Location-Based**: Address-based pickup coordination
@@ -70,11 +71,11 @@ ScrapMama is a Flask-based web application that serves as a marketplace connecti
 4. User can log in and access appropriate dashboard
 
 ### Trash Collection Workflow
-1. User creates trash post with details and location
+1. User creates trash post with details, location, and price
 2. Post appears in collector dashboard as available pickup
 3. Collector accepts the post (status: pending → accepted)
 4. Collector completes pickup (status: accepted → completed)
-5. User receives reward points based on trash type and quantity
+5. User receives payment based on their set price
 
 ### Database Schema
 ```sql
@@ -85,7 +86,7 @@ CREATE TABLE user (
     email VARCHAR(120) UNIQUE NOT NULL,
     password_hash VARCHAR(256) NOT NULL,
     user_type VARCHAR(20) DEFAULT 'user' NOT NULL,
-    reward_points INTEGER DEFAULT 0,
+    total_earnings NUMERIC(10,2) DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -99,7 +100,8 @@ CREATE TABLE trash_post (
     description TEXT,
     status VARCHAR(20) DEFAULT 'pending' NOT NULL,
     collector_id INTEGER REFERENCES user(id),
-    reward_points INTEGER NOT NULL,
+    price NUMERIC(10,2) NOT NULL,
+    is_negotiable BOOLEAN DEFAULT FALSE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP
 );
@@ -154,7 +156,8 @@ email-validator==2.1.0
 - **Load Balancing**: Support for multiple Flask instances
 
 ## Changelog
-- June 30, 2025. Initial setup
+- June 30, 2025: Initial setup with reward points system
+- June 30, 2025: Migrated from reward points to pricing system with negotiable options
 
 ## User Preferences
 

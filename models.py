@@ -9,7 +9,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     user_type = db.Column(db.String(20), default='user', nullable=False)  # 'user' or 'collector'
-    reward_points = db.Column(db.Integer, default=0)
+    total_earnings = db.Column(db.Numeric(10, 2), default=0.00)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationship to posts
@@ -42,37 +42,27 @@ class TrashPost(db.Model):
     description = db.Column(db.Text)
     status = db.Column(db.String(20), default='pending', nullable=False)  # 'pending', 'accepted', 'completed'
     collector_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    reward_points = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Numeric(10, 2), nullable=False)
+    is_negotiable = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     completed_at = db.Column(db.DateTime)
     
-    def __init__(self, user_id, trash_type, quantity, location, description):
+    def __init__(self, user_id, trash_type, quantity, location, description, price, is_negotiable=False):
         self.user_id = user_id
         self.trash_type = trash_type
         self.quantity = quantity
         self.location = location
         self.description = description
-        self.reward_points = self.calculate_reward_points()
-    
-    def calculate_reward_points(self):
-        # Simple reward calculation based on trash type and quantity
-        base_points = {
-            'plastic': 2,
-            'glass': 3,
-            'metal': 4,
-            'paper': 1,
-            'electronic': 5,
-            'organic': 1
-        }
-        return base_points.get(self.trash_type, 1) * self.quantity
+        self.price = price
+        self.is_negotiable = is_negotiable
     
     @staticmethod
     def get_available():
         return TrashPost.query.filter_by(status='pending').order_by(TrashPost.created_at.desc()).all()
     
     @staticmethod
-    def create(user_id, trash_type, quantity, location, description):
-        post = TrashPost(user_id, trash_type, quantity, location, description)
+    def create(user_id, trash_type, quantity, location, description, price, is_negotiable=False):
+        post = TrashPost(user_id, trash_type, quantity, location, description, price, is_negotiable)
         db.session.add(post)
         db.session.commit()
         return post
