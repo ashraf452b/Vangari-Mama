@@ -96,6 +96,17 @@ app_data = {
 - **Flask**: Core web framework
 - **Flask-Login**: User session management
 - **Werkzeug**: Password hashing and WSGI utilities
+- **Gunicorn**: WSGI HTTP server for production deployment
+- **Email-validator**: Email validation functionality
+
+### Installed Packages
+```
+Flask==3.0.0
+Flask-Login==0.6.3
+Werkzeug==3.0.1
+gunicorn==23.0.0
+email-validator==2.1.0
+```
 
 ### Browser Requirements
 - Modern browsers supporting ES6+ JavaScript
