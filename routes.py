@@ -1,226 +1,104 @@
-from flask import render_template, request, redirect, url_for, flash, jsonify
+from flask import render_template, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required, current_user
 from app import app, db
 from models import User, TrashPost
-from datetime import datetime
+from forms import LoginForm, RegistrationForm, PostForm # নতুন ফর্ম ইম্পোর্ট করা হলো
 
+# নতুন হোমপেজ (ল্যান্ডিং পেজ)
 @app.route('/')
-def index():
-    return render_template('index.html')
+def home():
+    return render_template('home.html')
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        user_type = request.form.get('user_type', 'user')
-        
-        # Validation
-        if not username or not email or not password:
-            flash('All fields are required.', 'danger')
-            return render_template('register.html')
-        
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists.', 'danger')
-            return render_template('register.html')
-        
-        if User.query.filter_by(email=email).first():
-            flash('Email already registered.', 'danger')
-            return render_template('register.html')
-        
-        # Create user
-        user = User.create(username, email, password, user_type)
-        flash('Registration successful! Please log in.', 'success')
-        return redirect(url_for('login'))
-    
-    return render_template('register.html')
+# সব পোস্ট দেখানোর পেজ
+@app.route('/posts')
+def all_posts():
+    posts = TrashPost.query.order_by(TrashPost.created_at.desc()).all()
+    return render_template('index.html', posts=posts, title='Available Posts')
 
+# লগইন পেজ
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        if not username or not password:
-            flash('Username and password are required.', 'danger')
-            return render_template('login.html')
-        
-        user = User.query.filter_by(username=username).first()
-        if user and user.check_password(password):
-            login_user(user)
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user and user.check_password(form.password.data):
+            login_user(user, remember=form.remember_me.data)
             flash(f'Welcome back, {user.username}!', 'success')
-            
-            # Redirect based on user type
+            # ইউজার টাইপ অনুযায়ী ড্যাশবোর্ডে রিডাইরেক্ট করা
             if user.user_type == 'collector':
                 return redirect(url_for('collector_dashboard'))
-            else:
-                return redirect(url_for('user_dashboard'))
+            return redirect(url_for('user_dashboard'))
         else:
-            flash('Invalid username or password.', 'danger')
-    
-    return render_template('login.html')
+            flash('Login Unsuccessful. Please check email and password', 'danger')
+    return render_template('login.html', title='Sign In', form=form)
 
+# লগআউট
 @app.route('/logout')
-@login_required
 def logout():
     logout_user()
-    flash('You have been logged out.', 'info')
-    return redirect(url_for('index'))
+    return redirect(url_for('home'))
 
-@app.route('/user_dashboard')
+# রেজিস্ট্রেশন পেজ
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=form.username.data, email=form.email.data)
+        user.set_password(form.password.data)
+        # আপনি চাইলে এখানে user_type সেট করার অপশন যোগ করতে পারেন
+        # user.user_type = 'user' 
+        db.session.add(user)
+        db.session.commit()
+        flash('Your account has been created! You are now able to log in', 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html', title='Register', form=form)
+
+# নতুন পোস্ট তৈরির পেজ
+@app.route('/post/new', methods=['GET', 'POST'])
+@login_required
+def create_post():
+    form = PostForm()
+    if form.validate_on_submit():
+        post = TrashPost(
+            user_id=current_user.id,
+            trash_type=form.trash_type.data,
+            quantity=form.quantity.data,
+            price=form.price.data,
+            location=form.location.data,
+            description=form.description.data
+        )
+        db.session.add(post)
+        db.session.commit()
+        flash('Your post has been created!', 'success')
+        return redirect(url_for('all_posts'))
+    return render_template('create_post.html', title='New Post', form=form)
+
+# একটি পোস্ট বিস্তারিত দেখার পেজ
+@app.route('/post/<int:post_id>')
+def view_post(post_id):
+    post = TrashPost.query.get_or_404(post_id)
+    return render_template('view_post.html', title=post.trash_type, post=post)
+
+# ইউজার ড্যাশবোর্ড
+@app.route('/dashboard')
 @login_required
 def user_dashboard():
-    if current_user.user_type != 'user':
-        flash('Access denied. This page is for users only.', 'danger')
+    if current_user.user_type == 'collector':
         return redirect(url_for('collector_dashboard'))
     
-    posts = current_user.posts.order_by(TrashPost.created_at.desc()).all()
-    total_earnings = sum(float(post.price) for post in posts if post.status == 'completed')
-    
-    return render_template('user_dashboard.html', posts=posts, total_earnings=total_earnings)
+    user_posts = TrashPost.query.filter_by(user_id=current_user.id).order_by(TrashPost.created_at.desc()).all()
+    return render_template('user_dashboard.html', title='My Dashboard', user_posts=user_posts)
 
-@app.route('/collector_dashboard')
+# কালেক্টর ড্যাশবোর্ড
+@app.route('/collector/dashboard')
 @login_required
 def collector_dashboard():
     if current_user.user_type != 'collector':
-        flash('Access denied. This page is for collectors only.', 'danger')
         return redirect(url_for('user_dashboard'))
     
-    available_posts = TrashPost.get_available()
-    my_pickups = current_user.collections.order_by(TrashPost.created_at.desc()).all()
-    
-    return render_template('collector_dashboard.html', 
-                         available_posts=available_posts, 
-                         my_pickups=my_pickups)
-
-@app.route('/create_post', methods=['GET', 'POST'])
-@login_required
-def create_post():
-    if current_user.user_type != 'user':
-        flash('Only users can create trash posts.', 'danger')
-        return redirect(url_for('collector_dashboard'))
-    
-    if request.method == 'POST':
-        trash_type = request.form.get('trash_type')
-        quantity = request.form.get('quantity')
-        location = request.form.get('location')
-        description = request.form.get('description')
-        price = request.form.get('price')
-        is_negotiable = request.form.get('is_negotiable') == 'on'
-        
-        # Validation
-        if not trash_type or not quantity or not location or not price:
-            flash('Trash type, quantity, location, and price are required.', 'danger')
-            return render_template('create_post.html')
-        
-        try:
-            quantity = int(quantity)
-            if quantity <= 0:
-                raise ValueError
-        except ValueError:
-            flash('Quantity must be a positive number.', 'danger')
-            return render_template('create_post.html')
-        
-        try:
-            price = float(price)
-            if price < 0:
-                raise ValueError
-        except ValueError:
-            flash('Price must be a valid number.', 'danger')
-            return render_template('create_post.html')
-        
-        # Create post
-        post = TrashPost.create(current_user.id, trash_type, quantity, location, description, price, is_negotiable)
-        flash('Trash post created successfully!', 'success')
-        return redirect(url_for('user_dashboard'))
-    
-    return render_template('create_post.html')
-
-@app.route('/post/<int:post_id>')
-@login_required
-def view_post(post_id):
-    post = TrashPost.query.get_or_404(post_id)
-    
-    # Get post owner information
-    post_owner = post.owner
-    collector = post.collector if post.collector_id else None
-    
-    return render_template('view_post.html', post=post, post_owner=post_owner, collector=collector)
-
-@app.route('/accept_pickup/<int:post_id>', methods=['POST'])
-@login_required
-def accept_pickup(post_id):
-    if current_user.user_type != 'collector':
-        flash('Only collectors can accept pickups.', 'danger')
-        return redirect(url_for('user_dashboard'))
-    
-    post = TrashPost.query.get_or_404(post_id)
-    
-    if post.status != 'pending':
-        flash('This pickup is no longer available.', 'warning')
-        return redirect(url_for('collector_dashboard'))
-    
-    # Accept the pickup
-    post.status = 'accepted'
-    post.collector_id = current_user.id
-    db.session.commit()
-    
-    flash('Pickup accepted successfully!', 'success')
-    return redirect(url_for('collector_dashboard'))
-
-@app.route('/complete_pickup/<int:post_id>', methods=['POST'])
-@login_required
-def complete_pickup(post_id):
-    if current_user.user_type != 'collector':
-        flash('Only collectors can complete pickups.', 'danger')
-        return redirect(url_for('user_dashboard'))
-    
-    post = TrashPost.query.get_or_404(post_id)
-    
-    if post.collector_id != current_user.id:
-        flash('You can only complete your own pickups.', 'danger')
-        return redirect(url_for('collector_dashboard'))
-    
-    if post.status != 'accepted':
-        flash('This pickup cannot be completed.', 'warning')
-        return redirect(url_for('collector_dashboard'))
-    
-    # Complete the pickup
-    post.status = 'completed'
-    post.completed_at = datetime.utcnow()
-    
-    # Add earnings to the user
-    user = post.owner
-    user.total_earnings += post.price
-    
-    db.session.commit()
-    
-    flash('Pickup completed successfully! Payment has been processed.', 'success')
-    return redirect(url_for('collector_dashboard'))
-
-@app.route('/cancel_pickup/<int:post_id>', methods=['POST'])
-@login_required
-def cancel_pickup(post_id):
-    post = TrashPost.query.get_or_404(post_id)
-    
-    # Check permissions
-    if current_user.user_type == 'user' and post.user_id != current_user.id:
-        flash('You can only cancel your own posts.', 'danger')
-        return redirect(url_for('user_dashboard'))
-    
-    if current_user.user_type == 'collector' and post.collector_id != current_user.id:
-        flash('You can only cancel your own pickups.', 'danger')
-        return redirect(url_for('collector_dashboard'))
-    
-    if post.status == 'completed':
-        flash('Cannot cancel a completed pickup.', 'warning')
-        return redirect(url_for('user_dashboard' if current_user.user_type == 'user' else 'collector_dashboard'))
-    
-    # Cancel the pickup
-    post.status = 'pending'
-    post.collector_id = None
-    db.session.commit()
-    
-    flash('Pickup cancelled successfully.', 'info')
-    return redirect(url_for('user_dashboard' if current_user.user_type == 'user' else 'collector_dashboard'))
+    available_posts = TrashPost.query.filter_by(status='pending').all()
+    return render_template('collector_dashboard.html', title='Collector Dashboard', posts=available_posts)

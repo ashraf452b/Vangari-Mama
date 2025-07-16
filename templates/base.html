@@ -1,122 +1,171 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ScrapMama - Trash Collection Marketplace{% endblock %}</title>
+    <title>{% block title %}Vangari Mama{% endblock %}</title>
     
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <!-- Google Fonts and Font Awesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <style>
+        :root {
+            --dark-bg: #111827;
+            --dark-card: #1F2937;
+            --primary-blue: #3B82F6;
+            --primary-hover: #2563EB;
+            --text-light: #F9FAFB;
+            --text-muted: #9CA3AF;
+            --border-color: #374151;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        /* --- Full-Width Navbar --- */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 5%; /* 5% padding on each side */
+            background-color: var(--dark-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .navbar .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-light);
+            text-decoration: none;
+        }
+        .navbar .logo i {
+            color: var(--primary-blue);
+            margin-right: 0.5rem;
+        }
+
+        .navbar .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin: 0 1rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        .navbar .nav-links a:hover {
+            color: var(--text-light);
+        }
+
+        .navbar .nav-buttons .btn {
+            text-decoration: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            font-weight: 700;
+            transition: background-color 0.2s ease;
+            border: 1px solid transparent;
+        }
+        .navbar .nav-buttons .btn-signin {
+            color: var(--text-light);
+            margin-right: 0.5rem;
+        }
+        .navbar .nav-buttons .btn-signin:hover {
+            background-color: var(--dark-card);
+        }
+        .navbar .nav-buttons .btn-getstarted {
+            background-color: var(--primary-blue);
+            color: var(--text-light);
+        }
+        .navbar .nav-buttons .btn-getstarted:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* --- Form Styles --- */
+        .form-container {
+            max-width: 450px;
+            margin: 2rem auto;
+            background-color: var(--dark-card);
+            padding: 2.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+        .form-container h1 {
+            text-align: center;
+            font-size: 1.75rem;
+            margin-bottom: 2rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background-color: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        .form-btn {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 0.5rem;
+            background-color: var(--primary-blue);
+            color: var(--text-light);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .form-switch-link {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        .form-switch-link a {
+            color: var(--primary-blue);
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">
-                <i class="fas fa-recycle text-success me-2"></i>ScrapMama
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
-                    </li>
-                    {% if current_user.is_authenticated %}
-                        {% if current_user.user_type == 'user' %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('user_dashboard') }}">Dashboard</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('create_post') }}">Create Post</a>
-                            </li>
-                        {% else %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('collector_dashboard') }}">Dashboard</a>
-                            </li>
-                        {% endif %}
-                    {% endif %}
-                </ul>
-                
-                <ul class="navbar-nav">
-                    {% if current_user.is_authenticated %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user me-1"></i>{{ current_user.username }}
-                                {% if current_user.user_type == 'user' %}
-                                    <span class="badge bg-success ms-1">${{ "%.2f"|format(current_user.total_earnings) }}</span>
-                                {% endif %}
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><h6 class="dropdown-header">{{ current_user.user_type|title }}</h6></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('logout') }}">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
-                                </a></li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('register') }}">Register</a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </div>
+
+    <header class="navbar">
+        <a href="{{ url_for('home') }}" class="logo"><i class="fas fa-recycle"></i>Vangari Mama</a>
+        <nav class="nav-links">
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('all_posts') }}">Available Posts</a>
+            <a href="#">How It Works</a>
+        </nav>
+        <div class="nav-buttons">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('logout') }}" class="btn btn-signin">Log Out</a>
+                <a href="{{ url_for('user_dashboard') }}" class="btn btn-getstarted">My Dashboard</a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-signin">Sign In</a>
+                <a href="{{ url_for('register') }}" class="btn btn-getstarted">Get Started</a>
+            {% endif %}
         </div>
-    </nav>
+    </header>
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="container mt-3">
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-
-    <!-- Main Content -->
     <main>
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-light py-4 mt-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5><i class="fas fa-recycle text-success me-2"></i>ScrapMama</h5>
-                    <p class="mb-0">Connecting communities for sustainable waste management.</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <p class="mb-0">&copy; 2025 ScrapMama. Making recycling rewarding.</p>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Custom JS -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    
-    {% block scripts %}{% endblock %}
 </body>
 </html>

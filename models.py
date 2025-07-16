@@ -8,11 +8,11 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    user_type = db.Column(db.String(20), default='user', nullable=False)  # 'user' or 'collector'
+    user_type = db.Column(db.String(20), default='user', nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
     total_earnings = db.Column(db.Numeric(10, 2), default=0.00)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationship to posts
     posts = db.relationship('TrashPost', foreign_keys='TrashPost.user_id', backref='owner', lazy='dynamic')
     collections = db.relationship('TrashPost', foreign_keys='TrashPost.collector_id', backref='collector', lazy='dynamic')
     
@@ -40,7 +40,7 @@ class TrashPost(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     location = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text)
-    status = db.Column(db.String(20), default='pending', nullable=False)  # 'pending', 'accepted', 'completed'
+    status = db.Column(db.String(20), default='pending', nullable=False)
     collector_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     price = db.Column(db.Numeric(10, 2), nullable=False)
     is_negotiable = db.Column(db.Boolean, default=False, nullable=False)
