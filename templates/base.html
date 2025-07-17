@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
     <style>
+        /* Modern Dark Theme CSS */
         :root {
             --dark-bg: #111827;
             --dark-card: #1F2937;
@@ -30,12 +31,18 @@
             line-height: 1.6;
         }
 
-        /* --- Full-Width Navbar --- */
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* --- Navbar --- */
         .navbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.5rem 5%; /* 5% padding on each side */
+            padding: 1.5rem 0;
             background-color: var(--dark-bg);
             border-bottom: 1px solid var(--border-color);
         }
@@ -85,7 +92,12 @@
             background-color: var(--primary-hover);
         }
 
-        /* --- Form Styles --- */
+        /* --- Main Content --- */
+        main {
+            padding: 4rem 0;
+        }
+
+        /* --- Form Styles for Login/Register --- */
         .form-container {
             max-width: 450px;
             margin: 2rem auto;
@@ -132,30 +144,54 @@
             font-size: 1rem;
             font-weight: 700;
             cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .form-btn:hover {
+            background-color: var(--primary-hover);
         }
         .form-switch-link {
             text-align: center;
             margin-top: 1.5rem;
+            color: var(--text-muted);
         }
         .form-switch-link a {
             color: var(--primary-blue);
             text-decoration: none;
+            font-weight: 500;
+        }
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+        .alert-danger {
+            background-color: #dc354520;
+            color: #f8d7da;
+        }
+        .alert-success {
+            background-color: #28a74520;
+            color: #d4edda;
         }
     </style>
 </head>
 <body>
 
-    <header class="navbar">
+    <header class="navbar container">
         <a href="{{ url_for('home') }}" class="logo"><i class="fas fa-recycle"></i>Vangari Mama</a>
         <nav class="nav-links">
             <a href="{{ url_for('home') }}">Home</a>
-            <a href="{{ url_for('all_posts') }}">Available Posts</a>
+            <a href="#">Available Posts</a>
             <a href="#">How It Works</a>
         </nav>
         <div class="nav-buttons">
             {% if current_user.is_authenticated %}
                 <a href="{{ url_for('logout') }}" class="btn btn-signin">Log Out</a>
-                <a href="{{ url_for('user_dashboard') }}" class="btn btn-getstarted">My Dashboard</a>
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('admin.index') }}" class="btn btn-getstarted">Admin Panel</a>
+                {% else %}
+                <a href="#" class="btn btn-getstarted">My Dashboard</a>
+                {% endif %}
             {% else %}
                 <a href="{{ url_for('login') }}" class="btn btn-signin">Sign In</a>
                 <a href="{{ url_for('register') }}" class="btn btn-getstarted">Get Started</a>
@@ -164,6 +200,15 @@
     </header>
 
     <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="container">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
         {% block content %}{% endblock %}
     </main>
 

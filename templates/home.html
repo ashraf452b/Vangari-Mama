@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Vangari Mama - Professional Scrap Collection On Demand{% endblock %}
+{% block title %}Vangari Mama - Sell Your Scrap On Demand{% endblock %}
 
 {% block content %}
 <style>
@@ -8,79 +8,87 @@
     .hero {
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        justify-content: center; /* Vertically centers the content */
+        align-items: center;     /* Horizontally centers the content */
         text-align: center;
-        min-height: 85vh;
-        padding: 4rem 5%; /* 5% padding on each side */
-        width: 90%; /* (100% - 5% - 5%) */
+        width: 100%;             /* Takes full available width */
+        min-height: 85vh;        /* Takes up 85% of the screen's height */
+        padding: 2rem;           /* Adds some space around the content */
+        box-sizing: border-box;  /* Ensures padding doesn't add to the width */
+        background: radial-gradient(circle, #1F2937, #111827);
     }
+
+    /* --- Headline Animation --- */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     .hero h1 {
-        font-size: 3.5rem;
+        font-size: 4rem;
         font-weight: 800;
         line-height: 1.2;
-        max-width: 800px;
-        margin: 0 auto;
+        max-width: 900px;
+        margin: 0;
+        animation: fadeInUp 0.8s ease-out;
     }
-    .hero h1 span {
+    .hero h1 .main-line {
+        color: var(--text-light);
+        display: block;
+    }
+    .hero h1 .sub-line {
         color: var(--primary-blue);
+        display: block;
+        margin-top: 0.5rem;
     }
     .hero p {
-        font-size: 1.125rem;
+        font-size: 1.2rem;
         color: var(--text-muted);
         max-width: 600px;
         margin: 1.5rem auto 2.5rem;
+        animation: fadeInUp 0.8s ease-out 0.2s;
+        animation-fill-mode: both;
     }
 
-    /* --- Search Bar --- */
-    .search-bar {
-        background-color: var(--dark-card);
-        padding: 1rem;
-        border-radius: 0.75rem;
-        display: flex;
-        align-items: center;
-        width: 100%;
-        max-width: 700px;
-        margin: 0 auto;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    /* --- Fancy "Create Post" Button --- */
+    .hero-actions {
+        margin-top: 2rem;
+        animation: fadeInUp 0.8s ease-out 0.4s;
+        animation-fill-mode: both;
     }
-    .search-bar .search-input {
-        flex-grow: 1;
-        background: none;
-        border: none;
+    .btn-create-post {
+        background: linear-gradient(45deg, var(--primary-blue), #60A5FA);
         color: var(--text-light);
-        font-size: 1rem;
-        padding: 0.5rem;
-    }
-    .search-bar .search-input::placeholder { color: var(--text-muted); }
-    .search-bar .search-input:focus { outline: none; }
-    .search-bar .search-btn {
-        background-color: var(--primary-blue);
-        color: var(--text-light);
-        border: none;
-        padding: 0.8rem 1.5rem;
-        border-radius: 0.5rem;
+        text-decoration: none;
+        padding: 1rem 2.5rem;
+        border-radius: 50px;
         font-weight: 700;
+        font-size: 1.1rem;
+        border: none;
+        box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
+        transition: all 0.3s ease;
         cursor: pointer;
     }
-    .search-bar i { color: var(--text-muted); margin: 0 1rem; }
-
-    /* --- Trust Badges --- */
-    .trust-badges {
-        display: flex;
-        justify-content: center;
-        gap: 2rem;
-        margin-top: 1.5rem;
-        font-weight: 500;
+    .btn-create-post:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.5);
     }
-    .trust-badges span i { color: #10B981; margin-right: 0.5rem; }
+    .btn-create-post i {
+        margin-right: 0.5rem;
+    }
 
     /* --- Full-Width Categories Section --- */
     .categories-section {
-        padding: 5rem 5%; /* 5% padding on each side */
+        padding: 5rem 2rem; /* Consistent padding */
         text-align: center;
         background-color: var(--dark-card);
-        width: 90%; /* (100% - 5% - 5%) */
+        width: calc(100% - 4rem); /* Full width minus padding */
     }
     .categories-section h2 {
         font-size: 2.25rem;
@@ -95,6 +103,8 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 1.5rem;
+        max-width: 1200px; /* Max width for the grid itself */
+        margin: 0 auto;
     }
     .category-card {
         background-color: var(--dark-bg);
@@ -127,23 +137,19 @@
 
 <!-- Hero Section -->
 <section class="hero">
-    <h1>Sell Your Scrap & <br><span>Find Your Treasure</span> On Demand</h1>
+    <h1>
+        <span class="main-line">Sell Your Scrap & Find Your Treasure</span>
+        <span class="sub-line">On Demand</span>
+    </h1>
+    
     <p>
         Book trusted collectors for your scrap metal, plastic, e-waste, and more. Get fair prices and enjoy quick collection service in real-time.
     </p>
 
-    <form class="search-bar" action="#" method="get">
-        <i class="fas fa-search"></i>
-        <input type="text" class="search-input" placeholder="What kind of scrap do you have?">
-        <i class="fas fa-map-marker-alt"></i>
-        <input type="text" class="search-input" placeholder="Enter your location">
-        <button type="submit" class="search-btn">Search Posts</button>
-    </form>
-
-    <div class="trust-badges">
-        <span><i class="fas fa-check-circle"></i> Verified Collectors</span>
-        <span><i class="fas fa-star"></i> 4.8+ Average Rating</span>
-        <span><i class="fas fa-bolt"></i> Same Day Collection</span>
+    <div class="hero-actions">
+        <a href="{{ url_for('create_post') }}" class="btn-create-post">
+            <i class="fas fa-plus-circle"></i>Create a Post
+        </a>
     </div>
 </section>
 
